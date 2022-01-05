@@ -165,49 +165,77 @@ describe("NFTEX contract", function () {
 
   describe("Get at mint events", function () {
     it("Print event log", async function () {
-
       const web3NFTContract = new web3.eth.Contract(
         AnconNFTjson.abi,
         anconNFT.address
       );
 
       //Mint Query event
-      const transferEventLog = await web3NFTContract.getPastEvents("Transfer", {
-        toBlock: "latest",
-        fromBlock: 0,
-        filter: { user: owner.address },
-      });
+      // Can't realistically execute the query with "fromBlock: 0 in the front end"
+      // Because block number is too large & it will return an error
+      // For a freshly minted NFT we can use 'fromBlock: currentBlock - 1'
+      // But for an all time minted NFT list
+      // A pagination system must be implemented
 
-      const setOnchainEventLog = await web3NFTContract.getPastEvents(
-        "AddOnchainMetadata",
+      let currentBlock = await web3.eth.getBlockNumber();
+      console.log("CurrentBlock", currentBlock);
+
+      // Last single wallet events
+      currentBlock = await web3.eth.getBlockNumber();
+      const transferEventsSingleWallet = await web3NFTContract.getPastEvents(
+        "Transfer",
         {
           toBlock: "latest",
-          fromBlock: 0,
+          fromBlock: currentBlock - 2,
           filter: { user: owner.address },
         }
       );
 
-      const setOnchainEventLogAll = await web3NFTContract.getPastEvents(
+      console.log(
+        "\n [Web3 response] 'Transfer' Get last event from single wallet",
+        transferEventsSingleWallet.reverse()[0]
+      );
+
+      const setOnchainEventSingle = await web3NFTContract.getPastEvents(
         "AddOnchainMetadata",
         {
           toBlock: "latest",
-          fromBlock: 0,
+          fromBlock: currentBlock - 2,
+          filter: { user: owner.address },
         }
       );
 
       console.log(
-        "'Transfer' Get past events Web3 response print",
-        transferEventLog[0]
+        "\n [Web3 response] 'AddOnchainMetadata' Get last event from single wallet",
+        setOnchainEventSingle.reverse()[0]
+      );
+
+      // All wallets events
+
+      const transferEventsAll = await web3NFTContract.getPastEvents(
+        "Transfer",
+        {
+          toBlock: "latest",
+          fromBlock: 0, //Must implement pagination
+        }
+      );
+
+      // console.log(
+      //   "\n [Web3 response] 'Transfer' all events",
+      //   transferEventsAll
+      // );
+
+      const setOnchainEventAll = await web3NFTContract.getPastEvents(
+        "AddOnchainMetadata",
+        {
+          toBlock: "latest",
+          fromBlock: 0, //Must implement pagination
+        }
       );
 
       console.log(
-        "'AddOnchainMetadata' from owner Get past events Web3 response print",
-        setOnchainEventLog
-      );
-
-      console.log(
-        "'AddOnchainMetadata' all Get past events Web3 response print",
-        setOnchainEventLogAll
+        "\n [Web3 response] 'AddOnchainMetadata' all events",
+        setOnchainEventAll
       );
     });
   });
