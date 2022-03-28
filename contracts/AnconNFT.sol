@@ -11,9 +11,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./MintInfo.sol";
 
-//import "./ICredentialRegistry.sol";
-
-//  a NFT secure document
+/// Ancon marketplace NFT
 contract AnconNFT is
     ERC721Burnable,
     ERC721Pausable,
@@ -44,9 +42,9 @@ contract AnconNFT is
         uint256 paidToPaymentAddress
     );
 
-    /**
-     * XDVNFT Data Token
-     */
+    ///
+    /// XDVNFT Data Token
+    ///
     constructor(
         string memory name,
         string memory symbol,
@@ -57,20 +55,29 @@ contract AnconNFT is
         verifierAddress = verifierAddr;
     }
 
+    ///
+    /// @dev Sets service fee for payment address
+    /// @param _fee amount for payment address
+    ///
     function setServiceFeeForPaymentAddress(uint256 _fee) public onlyOwner {
         serviceFeeForPaymentAddress = _fee;
     }
 
+    ///
+    /// @dev Sets service fee for payment address
+    /// @param _fee amount for payment address
+    ///
     function setServiceFeeForContract(uint256 _fee) public onlyOwner {
         serviceFeeForContract = _fee;
     }
 
-    /**
-     * @dev Mints a XDV Data Token+
-     * @param user Addres of the nft minter wallet
-     * @param uri Uuid generated on the front end with the uuidv4 library. Uuids are used as a general index.
-     * @param _royaltyFeePercent Royalty fee percentage, must be between 0 to 10000, 1 = 0.01%, 10000 = 100.00%
-     */
+    ///
+    /// @dev Mints a XDV Data Token+
+    /// @param user Addres of the nft minter wallet
+    /// @param uri Uuid generated on the front end with the uuidv4 library. Uuids are used as a general index.
+    /// @param _royaltyFeePercent Royalty fee percentage, must be between 0 to 10000, 1 = 0.01%, 10000 = 100.00%
+    /// @return newItemId New item token Id
+    /// 
     function mint(
         address user,
         string memory uri,
@@ -87,23 +94,33 @@ contract AnconNFT is
         return newItemId;
     }
 
+    ///
+    /// @dev returns creator address of given token Id
+    /// @param id token Id
+    /// @return creator creator address
+    /// 
     function getCreator(uint256 id) external view returns(address){
         return creators[id].creator;
     }
 
+    ///
+    /// @dev returns royalty fee % of given token Id
+    /// @param id token Id
+    /// @return royaltyFee token royalty fee % 
+    /// 
     function getRoyaltyFee(uint256 id) external view returns(uint256){
         return creators[id].royaltyFee;
     }
 
-    /**
-     * @dev Whenever an {IERC721} `tokenId` token is transferred to this contract via {IERC721-safeTransferFrom}
-     * by `operator` from `from`, this function is called.
-     *
-     * It must return its Solidity selector to confirm the token transfer.
-     * If any other value is returned or the interface is not implemented by the recipient, the transfer will be reverted.
-     *
-     * The selector can be obtained in Solidity with `IERC721.onERC721Received.selector`.
-     */
+    ///
+    /// @dev Whenever an {IERC721} `tokenId` token is transferred to this contract via {IERC721-safeTransferFrom}
+    /// by `operator` from `from`, this function is called.
+    ///
+    /// It must return its Solidity selector to confirm the token transfer.
+    /// If any other value is returned or the interface is not implemented by the recipient, the transfer will be reverted.
+    ///
+    /// The selector can be obtained in Solidity with `IERC721.onERC721Received.selector`.
+    ///
     function onERC721Received(
         address operator,
         address from,
@@ -127,10 +144,10 @@ contract AnconNFT is
         return this.onERC721Received.selector;
     }
 
-    /**
-     * @dev Just overrides the superclass' function. Fixes inheritance
-     * source: https://forum.openzeppelin.com/t/how-do-inherit-from-erc721-erc721enumerable-and-erc721uristorage-in-v4-of-openzeppelin-contracts/6656/4
-     */
+    ///
+    /// @dev Just overrides the superclass' function. Fixes inheritance
+    /// source: https://forum.openzeppelin.com/t/how-do-inherit-from-erc721-erc721enumerable-and-erc721uristorage-in-v4-of-openzeppelin-contracts/6656/4
+    ///
     function _burn(uint256 tokenId)
         internal
         override(ERC721, ERC721URIStorage)
@@ -138,10 +155,10 @@ contract AnconNFT is
         super._burn(tokenId);
     }
 
-    /**
-     * @dev Just overrides the superclass' function. Fixes inheritance
-     * source: https://forum.openzeppelin.com/t/how-do-inherit-from-erc721-erc721enumerable-and-erc721uristorage-in-v4-of-openzeppelin-contracts/6656/4
-     */
+    /// 
+    /// @dev Just overrides the superclass' function. Fixes inheritance
+    /// source: https://forum.openzeppelin.com/t/how-do-inherit-from-erc721-erc721enumerable-and-erc721uristorage-in-v4-of-openzeppelin-contracts/6656/4
+    /// 
     function tokenURI(uint256 tokenId)
         public
         view
@@ -165,10 +182,10 @@ contract AnconNFT is
         super._beforeTokenTransfer(from, to, tokenId);
     }
 
-    /**
-     * @dev tries to execute the payment when the token is minted.
-     * Reverts if the payment procedure could not be completed.
-     */
+    ///
+    /// @dev tries to execute the payment when the token is minted.
+    /// Reverts if the payment procedure could not be completed.
+    ///
     function paymentBeforeMint(address tokenHolder) internal virtual {
         // Transfer tokens to pay service fee
         require(
@@ -187,6 +204,10 @@ contract AnconNFT is
         );
     }
 
+    ///
+    /// @dev Withdraws the contract collected fee balance
+    /// @param payee Payee address
+    ///
     function withdrawBalance(address payable payee) public onlyOwner {
         uint256 balance = nativeCoin.balanceOf(address(this));
 

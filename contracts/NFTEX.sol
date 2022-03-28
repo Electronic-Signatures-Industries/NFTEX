@@ -56,11 +56,11 @@ contract NFTEX is ERC721Holder, Ownable {
     nativeCoin = IERC20(tokenERC20);
   }
 
-    ///
-    /// @dev gets the current price of an order
-    /// @param _order Id of the order 
-    /// @return price of the order according to order type
-    /// 
+  ///
+  /// @dev gets the current price of an order
+  /// @param _order Id of the order 
+  /// @return price of the order according to order type
+  /// 
   function getCurrentPrice(bytes32 _order) public view returns (uint256) {
     Order storage o = orderInfo[_order];
     OrderType orderType = o.orderType;
@@ -77,25 +77,63 @@ contract NFTEX is ERC721Holder, Ownable {
     }
   }
 
+  ///
+  /// @dev gets the order id lenght
+  /// @param _seller address of the order seller
+  /// @return lenght of the order Id string
+  /// 
   function sellerOrderLength(address _seller) external view returns (uint256) {
     return orderIdBySeller[_seller].length;
   }
 
   // make order fx
   //0:Fixed Price, 1:Dutch Auction, 2:English Auction
+  ///
+  /// @dev makes a dutch auction order
+  /// @param _token Instance of the token to be listed 
+  /// @param _id Id of the token to be listed
+  /// @param _startPrice auction start price
+  /// @param _endPrice auction end price
+  /// @param _endBlock auction end block
+  /// 
   function dutchAuction(IERC721Metadata _token, uint256 _id, uint256 _startPrice, uint256 _endPrice, uint256 _endBlock) public {
     require(_startPrice > _endPrice, "End price should be lower than start price");
     _makeOrder(OrderType.Dutch, _token, _id, _startPrice, _endPrice, _endBlock);
-  }  //sp != ep
+  }
 
+  ///
+  /// @dev makes a english auction order
+  /// @param _token Instance of the token to be listed 
+  /// @param _id Id of the token to be listed
+  /// @param _startPrice auction start price
+  /// @param _endBlock auction end block
+  /// 
   function englishAuction(IERC721Metadata _token, uint256 _id, uint256 _startPrice, uint256 _endBlock) public {
     _makeOrder(OrderType.English, _token, _id, _startPrice, 0, _endBlock);
-  } //ep=0. for gas saving.
+  }
 
+  ///
+  /// @dev makes a fixed price order
+  /// @param _token Instance of the token to be listed 
+  /// @param _id Id of the token to be listed
+  /// @param _price auction start price
+  /// @param _endTimestamp auction end timestamp
+  /// 
   function fixedPrice(IERC721Metadata _token, uint256 _id, uint256 _price, uint256 _endTimestamp) public {
     _makeOrder(OrderType.Fixed, _token, _id, _price, 0, _endTimestamp);
-  }  //ep=0. for gas saving.
+  }
 
+  ///
+  /// @dev Is called by either fixedPrice(), englishAuction() or dutchAuction().
+  /// Makes an order depending on the ordertype parameter received.
+  /// Emits MakeOrder event.
+  /// @param _orderType Order type enum {Fixed, Dutch, English}
+  /// @param _token Instance of the token to be listed 
+  /// @param _id Id of the token to be listed
+  /// @param _startPrice auction start price
+  /// @param _endPrice auction end price
+  /// @param _endTimestamp auction end timestamp
+  ///
   function _makeOrder(
     OrderType _orderType,
     IERC721Metadata _token,
@@ -133,19 +171,29 @@ contract NFTEX is ERC721Holder, Ownable {
     //check if seller has a right to transfer the NFT token. safeTransferFrom.
     _token.safeTransferFrom(msg.sender, address(this), _id);
 
-    // IERC721Metadata tokenStorage = _token;
     string memory uri = _token.tokenURI(_id);
     // TODO: Event register token airdrop
-    // emit ERC721Recerived(operator, from, tokenId, data)
+    // emit ERC721Received(operator, from, tokenId, data)
     
     emit MakeOrder(_token, _id, hash, msg.sender, uri, _endTimestamp, _startPrice);
     emit GiveReward(feeAddress, msg.sender, _id, _token);
   }
 
+  ///
+  /// @dev Calculates the orderId/orderHash
+  /// @param _token Instance of an ERC721Metadata token
+  /// @param _id tokenId
+  /// @param  _seller address making the order
+  /// @return hash keccak256 encoded order id/hash
+  /// 
   function _hash(IERC721Metadata _token, uint256 _id, address _seller) internal view returns (bytes32) {
     return keccak256(abi.encodePacked(block.timestamp, _token, _id, _seller));
   }
 
+  ///
+  /// @dev Buys the nft of an open Fixed Price order
+  /// @param _order bytes32 order hash
+  /// 
   function buyItNow(bytes32 _order) payable external {
     Order storage o = orderInfo[_order];
     uint256 endBlock = o.endBlock;
@@ -189,6 +237,10 @@ contract NFTEX is ERC721Holder, Ownable {
     emit Claim(o.token, o.tokenId, _order, o.seller, msg.sender, currentPrice, o.token.tokenURI(o.tokenId));
   }
 
+  ///
+  /// @dev Cancel an active order
+  /// @param _order  bytes32 order hash
+  /// 
   function cancelOrder(bytes32 _order) external {
     Order storage o = orderInfo[_order];
     require(o.seller == msg.sender, "Access denied");
@@ -206,17 +258,29 @@ contract NFTEX is ERC721Holder, Ownable {
     emit CancelOrder(token, tokenId, _order, msg.sender, uri);
   }
 
-  //feeAddress must be either an EOA or a contract must have payable receive fx and doesn't have some codes in that fx.
-  //If not, it might be that it won't be receive any fee.
+  ///
+  /// feeAddress must be either an EOA or a contract must have payable receive fx and doesn't have some codes in that fx.
+  /// If not, it might be that it won't be receive any fee.
+  /// @dev Seets the recipient of the marketplace fees
+  /// @param _feeAddress recipient address
+  /// 
   function setFeeAddress(address _feeAddress) external onlyOwner {
     feeAddress = _feeAddress;
   }
 
+  ///
+  /// @dev Seets the fee % of the marketplace fees
+  /// @param _percent fee % of each order
+  /// 
   function setFeePercent(uint16 _percent) external onlyOwner {
     require(_percent <= 10000, "input value is more than 100%");
     feePercent = _percent;
   }
 
+    ///
+    /// @dev Withdraws the contract collected fee balance
+    /// @param payee Payee address
+    ///
   function withdrawBalance(address payable payee) public onlyOwner {
     uint256 balance = nativeCoin.balanceOf(address(this));
 
