@@ -32,7 +32,7 @@ contract AnconNFT is
     uint256 public serviceFeeForPaymentAddress = 0;
     uint256 public serviceFeeForContract = 0;
     uint256 public royaltyFeePercent;
-    mapping (uint256 => CreatorInfo) public creators;
+    mapping(uint256 => CreatorInfo) public creators;
 
     event Withdrawn(address indexed paymentAddress, uint256 amount);
 
@@ -77,7 +77,7 @@ contract AnconNFT is
     /// @param uri Uuid generated on the front end with the uuidv4 library. Uuids are used as a general index.
     /// @param _royaltyFeePercent Royalty fee percentage, must be between 0 to 10000, 1 = 0.01%, 10000 = 100.00%
     /// @return newItemId New item token Id
-    /// 
+    ///
     function mint(
         address user,
         string memory uri,
@@ -90,7 +90,7 @@ contract AnconNFT is
         _safeMint(user, newItemId);
         _setTokenURI(newItemId, uri);
         setMintInfo(user, uri, newItemId, _royaltyFeePercent);
-        creators[newItemId] = CreatorInfo(user,_royaltyFeePercent);
+        creators[newItemId] = CreatorInfo(user, _royaltyFeePercent);
         return newItemId;
     }
 
@@ -98,17 +98,17 @@ contract AnconNFT is
     /// @dev returns creator address of given token Id
     /// @param id token Id
     /// @return creator creator address
-    /// 
-    function getCreator(uint256 id) external view returns(address){
+    ///
+    function getCreator(uint256 id) external view returns (address) {
         return creators[id].creator;
     }
 
     ///
     /// @dev returns royalty fee % of given token Id
     /// @param id token Id
-    /// @return royaltyFee token royalty fee % 
-    /// 
-    function getRoyaltyFee(uint256 id) external view returns(uint256){
+    /// @return royaltyFee token royalty fee %
+    ///
+    function getRoyaltyFee(uint256 id) external view returns (uint256) {
         return creators[id].royaltyFee;
     }
 
@@ -155,10 +155,10 @@ contract AnconNFT is
         super._burn(tokenId);
     }
 
-    /// 
+    ///
     /// @dev Just overrides the superclass' function. Fixes inheritance
     /// source: https://forum.openzeppelin.com/t/how-do-inherit-from-erc721-erc721enumerable-and-erc721uristorage-in-v4-of-openzeppelin-contracts/6656/4
-    /// 
+    ///
     function tokenURI(uint256 tokenId)
         public
         view
