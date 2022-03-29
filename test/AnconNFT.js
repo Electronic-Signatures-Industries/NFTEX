@@ -5,7 +5,7 @@ require("dotenv").config();
 const AnconNFTjson = require("../artifacts/contracts/AnconNFT.sol/AnconNFT.json");
 
 describe("NFTEX contract", function () {
-    let token,
+  let token,
     Token,
     owner,
     addr1,
@@ -13,7 +13,10 @@ describe("NFTEX contract", function () {
     addr3,
     addr4,
     AnconToken,
-    anconToken;
+    anconToken,
+    web3NFTContract,
+    transferEventLog,
+    addMintInfoEventLogs;
 
   before(async function () {
     // Token = await ethers.getContractFactory("Token");
@@ -60,6 +63,20 @@ describe("NFTEX contract", function () {
       "866124d8-6c7b-4d50-8705-f7dea72e4695",
       10000
     );
+
+    web3NFTContract = new web3.eth.Contract(AnconNFTjson.abi, anconNFT.address);
+
+    //Mint Query 'Transfer' event
+    transferEventLog = await web3NFTContract.getPastEvents("Transfer", {
+      toBlock: "latest",
+      fromBlock: 0,
+    });
+
+    //Mint Query 'AddMintInfo' event
+    addMintInfoEventLogs = await web3NFTContract.getPastEvents("AddMintInfo", {
+      toBlock: "latest",
+      fromBlock: 0,
+    });
   });
 
   //setServiceFeeForContract
@@ -86,56 +103,104 @@ describe("NFTEX contract", function () {
 
   // describe("Service fee for contract", function () {
   //   it("should get & set service five fee for contract and discount it from the nft minter address", async function () {
-      
+
   //   });
   // });
 
-  describe("Get at mint events", function () {
-    it("Should print event logs", async function () {
-      const web3NFTContract = new web3.eth.Contract(
-        AnconNFTjson.abi,
-        anconNFT.address
-      );
+  describe("Verify 'Transfer' events", function () {
+    it("Should have the corresponding 'from' field value", async function () {
+      expect(transferEventLog.length).to.equal(5);
 
-      //Mint Query event
-      const transferEventLog = await web3NFTContract.getPastEvents("Transfer", {
-        toBlock: "latest",
-        fromBlock: 0,
-        filter: { user: owner.address },
-      });
-
-      const setOnchainEventLog = await web3NFTContract.getPastEvents(
-        "AddMintInfo",
-        {
-          toBlock: "latest",
-          fromBlock: 0,
-          filter: { user: owner.address },
-        }
+      //Check mint 'from'
+      expect(transferEventLog[0].returnValues.from).to.equal(
+        "0x0000000000000000000000000000000000000000"
       );
-
-      const setOnchainEventLogAll = await web3NFTContract.getPastEvents(
-        "AddMintInfo",
-        {
-          toBlock: "latest",
-          fromBlock: 0,
-        }
+      expect(transferEventLog[1].returnValues.from).to.equal(
+        "0x0000000000000000000000000000000000000000"
       );
-
-      console.log(
-        "\n 'Transfer' Get past events Web3 response print",
-        transferEventLog[0]
+      expect(transferEventLog[2].returnValues.from).to.equal(
+        "0x0000000000000000000000000000000000000000"
       );
-
-      console.log(
-        "\n 'AddMintInfo' from owner Get past events Web3 response print",
-        setOnchainEventLog
+      expect(transferEventLog[3].returnValues.from).to.equal(
+        "0x0000000000000000000000000000000000000000"
       );
-
-      console.log(
-        "\n 'AddMintInfo' all Get past events Web3 response print",
-        setOnchainEventLogAll
+      expect(transferEventLog[4].returnValues.from).to.equal(
+        "0x0000000000000000000000000000000000000000"
       );
+    });
+
+    it("Should have the corresponding 'to' field value", async function () {
+      //Check mint 'to'
+      expect(transferEventLog[0].returnValues.to).to.equal(owner.address);
+      expect(transferEventLog[1].returnValues.to).to.equal(addr1.address);
+      expect(transferEventLog[2].returnValues.to).to.equal(addr1.address);
+      expect(transferEventLog[3].returnValues.to).to.equal(addr2.address);
+      expect(transferEventLog[4].returnValues.to).to.equal(addr4.address);
+    });
+
+    it("Should have the corresponding 'tokenId' field value", async function () {
+      //Check mint 'tokenId'
+      expect(transferEventLog[0].returnValues.tokenId).to.equal("1");
+      expect(transferEventLog[1].returnValues.tokenId).to.equal("2");
+      expect(transferEventLog[2].returnValues.tokenId).to.equal("3");
+      expect(transferEventLog[3].returnValues.tokenId).to.equal("4");
+      expect(transferEventLog[4].returnValues.tokenId).to.equal("5");
     });
   });
 
+  describe("Verify 'AddMintInfo' events", function () {
+    it("Should have the corresponding 'creator' field value", async () => {
+      expect(addMintInfoEventLogs.length).to.equal(5);
+
+      expect(addMintInfoEventLogs[0].returnValues.creator).to.equal(
+        owner.address
+      );
+      expect(addMintInfoEventLogs[1].returnValues.creator).to.equal(
+        addr1.address
+      );
+      expect(addMintInfoEventLogs[2].returnValues.creator).to.equal(
+        addr1.address
+      );
+      expect(addMintInfoEventLogs[3].returnValues.creator).to.equal(
+        addr2.address
+      );
+      expect(addMintInfoEventLogs[4].returnValues.creator).to.equal(
+        addr4.address
+      );
+    });
+
+    it("Should have the corresponding 'uri' field value", async () => {
+      expect(addMintInfoEventLogs[0].returnValues.uri).to.equal(
+        "d0ae3a5b-b86d-4227-9bec-e2438ab485ca"
+      );
+      expect(addMintInfoEventLogs[1].returnValues.uri).to.equal(
+        "a67083c3-a36b-4956-baa0-c9239c75c582"
+      );
+      expect(addMintInfoEventLogs[2].returnValues.uri).to.equal(
+        "04030310-d8df-441a-89f6-44ab9c7dab19"
+      );
+      expect(addMintInfoEventLogs[3].returnValues.uri).to.equal(
+        "f9754447-70e3-440e-90a5-86e632dbb4c2"
+      );
+      expect(addMintInfoEventLogs[4].returnValues.uri).to.equal(
+        "866124d8-6c7b-4d50-8705-f7dea72e4695"
+      );
+    });
+
+    it("Should have the corresponding 'tokenId' field value", async () => {
+      expect(addMintInfoEventLogs[0].returnValues.tokenId).to.equal("1");
+      expect(addMintInfoEventLogs[1].returnValues.tokenId).to.equal("2");
+      expect(addMintInfoEventLogs[2].returnValues.tokenId).to.equal("3");
+      expect(addMintInfoEventLogs[3].returnValues.tokenId).to.equal("4");
+      expect(addMintInfoEventLogs[4].returnValues.tokenId).to.equal("5");
+    });
+
+    it("Should have the corresponding 'royaltyFee' field value", async () => {
+      expect(addMintInfoEventLogs[0].returnValues.royaltyFee).to.equal("1");
+      expect(addMintInfoEventLogs[1].returnValues.royaltyFee).to.equal("2");
+      expect(addMintInfoEventLogs[2].returnValues.royaltyFee).to.equal("20");
+      expect(addMintInfoEventLogs[3].returnValues.royaltyFee).to.equal("100");
+      expect(addMintInfoEventLogs[4].returnValues.royaltyFee).to.equal("10000");
+    });
+  });
 });
