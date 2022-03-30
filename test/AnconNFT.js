@@ -101,11 +101,21 @@ describe("AnconNFT contract", function () {
     });
   });
 
-  // describe("Service fee for contract", function () {
-  //   it("should get & set service five fee for contract and discount it from the nft minter address", async function () {
+  describe("Service fee for contract", function () {
+    it("should get & set service fee for contract and attempt to discount it from the nft minter address", async function () {
+      await anconNFT.setServiceFeeForContract(1);
 
-  //   });
-  // });
+      await expect(
+        anconNFT.mint(
+          addr4.address,
+          "203b6379-cb5a-4b82-8267-c096f540e48b",
+          100
+        )
+      ).to.be.revertedWith(
+        "VM Exception while processing transaction: reverted with reason string 'ERC20: transfer amount exceeds allowance'"
+      );
+    });
+  });
 
   describe("Verify 'Transfer' events", function () {
     it("Should have the corresponding 'from' field value", async function () {
