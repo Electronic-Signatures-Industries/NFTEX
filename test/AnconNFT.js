@@ -4,7 +4,7 @@ require("@nomiclabs/hardhat-web3");
 require("dotenv").config();
 const AnconNFTjson = require("../artifacts/contracts/AnconNFT.sol/AnconNFT.json");
 
-describe("NFTEX contract", function () {
+describe("AnconNFT contract", function () {
   let token,
     Token,
     owner,
